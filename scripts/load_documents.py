@@ -34,18 +34,8 @@ def main():
     if confirm.lower() != 'y':
         logger.info("Operation cancelled by user")
         return
-    
-    clear = input("Do you want to clear existing documents first? (y/n): ")
-    
+        
     document_service = DocumentService()
-    
-    if clear.lower() == 'y':
-        logger.info("Clearing existing documents...")
-        result = document_service.clear_documents()
-        if not result["success"]:
-            logger.error(f"Failed to clear documents: {result.get('error', 'Unknown error')}")
-            return
-        logger.info("Existing documents cleared successfully")
     
     logger.info("Loading documents...")
     result = document_service.load_all_documents()
