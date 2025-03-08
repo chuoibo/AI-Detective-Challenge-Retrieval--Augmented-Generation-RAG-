@@ -80,3 +80,17 @@ Place your case files (in .txt format) in the `data/case_files/` directory. The 
 ### Loading Documents
 
 Before using the system, load the case files into the vector database:
+
+### How to run:
+
+1. Run these steps to test the system
+
+```bash
+cd repo
+python main.py
+streamlit run app/ui/streamlit_app.py --server.port 8501
+```
+
+The UI will be something like this:
+![Image](https://github.com/user-attachments/assets/7d670c81-bad1-42f9-b46d-6076c6e3dc13)
+

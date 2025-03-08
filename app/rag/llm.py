@@ -17,24 +17,12 @@ class ReportGenerator:
         documents: List[Dict[str, Any]], 
         retrieval_info: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        Generate an investigation report based on the retrieved documents.
         
-        Args:
-            query: The detective's original query
-            documents: List of reranked documents
-            retrieval_info: Additional information about the retrieval process
-            
-        Returns:
-            Dictionary containing the generated report and metadata
-        """
-        # Prepare context from documents
         document_context = "\n\n".join([
             f"DOCUMENT {i+1} (Confidence: {doc['confidence']}):\n{doc['text']}"
             for i, doc in enumerate(documents)
         ])
         
-        # Include retrieval strategy information
         strategy_info = ""
         if retrieval_info["strategy"] == "multi-step":
             expanded_queries = retrieval_info.get("expanded_queries", [])

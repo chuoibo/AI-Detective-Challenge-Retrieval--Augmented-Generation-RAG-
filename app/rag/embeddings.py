@@ -44,12 +44,10 @@ class EmbeddingProcessor:
         
         i = 0
         while i < len(tokens):
-            # Extract chunk_size tokens
             chunk_end = min(i + self.chunk_size, len(tokens))
             chunk = self.tokenizer.decode(tokens[i:chunk_end])
             chunks.append(chunk)
             
-            # Move to next chunk, considering overlap
             i += self.chunk_size - self.chunk_overlap
         
         return chunks
