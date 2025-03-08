@@ -55,11 +55,15 @@ class EmbeddingProcessor:
         return chunks
     
     def create_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for a list of text chunks."""
         try:
-            response = self.client.embeddings.create(input=[texts], model=self.model).data[0].embedding
+            response = self.client.embeddings.create(
+                input=texts, 
+                model=self.model
+            )
             
-            return [data["embedding"] for data in response["data"]]
+            embeddings = [item.embedding for item in response.data]
+            
+            return embeddings
         except Exception as e:
             print(f"Error generating embeddings: {e}")
             raise

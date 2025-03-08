@@ -14,7 +14,6 @@ class DocumentRetriever:
         self.top_k = settings.TOP_K_RETRIEVAL
     
     def get_embedding(self, text: str) -> List[float]:
-        """Generate embedding for a single text."""
         response = self.client.embeddings.create(
             input=[text],
             model=settings.EMBEDDING_MODEL
@@ -22,7 +21,6 @@ class DocumentRetriever:
         return response.data[0].embedding
     
     def single_step_retrieval(self, query: str) -> List[Dict[str, Any]]:
-        """Simple retrieval that directly matches the query with documents."""
         query_embedding = self.get_embedding(query)
         return self.pinecone_db.similarity_search(
             query_embedding=query_embedding,
@@ -43,7 +41,7 @@ class DocumentRetriever:
         and digital forensics where appropriate.
         """
         
-        response = openai.ChatCompletion.create(
+        response = self.client.chat.completions.create(
             model=settings.LLM_MODEL,
             messages=[
                 {"role": "system", "content": "You are a criminal investigation assistant."},
@@ -53,10 +51,8 @@ class DocumentRetriever:
             max_tokens=300
         )
         
-        # Extract generated queries from the response
         try:
             content = response.choices[0].message.content
-            # Look for JSON array in the response
             start_idx = content.find('[')
             end_idx = content.rfind(']') + 1
             
@@ -65,42 +61,31 @@ class DocumentRetriever:
                 queries = json.loads(json_str)
                 return queries
             else:
-                # Fallback if JSON parsing fails
                 lines = [line.strip() for line in content.split('\n') if line.strip()]
                 queries = [line.split(":", 1)[-1].strip() for line in lines if ":" in line]
-                return queries[:3] + [query]  # Include original query as backup
+                return queries[:3] + [query]  
         except Exception as e:
             print(f"Error parsing LLM output: {e}")
-            # Fallback to original query
             return [query]
     
     def multi_step_retrieval(self, query: str) -> Tuple[List[Dict[str, Any]], List[str]]:
-        """
-        Advanced retrieval that expands the query and retrieves documents in multiple steps.
-        Returns both the retrieved documents and the expanded queries used.
-        """
-        # Step 1: Generate multiple search queries
         expanded_queries = self.generate_search_queries(query)
         
-        # Step 2: Get embeddings for all queries
         all_results = []
         
-        # Step 3: Execute each query and collect results
         for expanded_query in expanded_queries:
             query_embedding = self.get_embedding(expanded_query)
             results = self.pinecone_db.similarity_search(
                 query_embedding=query_embedding,
-                top_k=self.top_k // len(expanded_queries) + 1  # Distribute top_k among queries
+                top_k=self.top_k // len(expanded_queries) + 1  
             )
             all_results.extend(results)
         
-        # Step 4: Remove duplicates based on document ID
         unique_results = {}
         for result in all_results:
             if result["id"] not in unique_results or result["score"] > unique_results[result["id"]]["score"]:
                 unique_results[result["id"]] = result
         
-        # Step 5: Sort by score and limit to top_k
         final_results = sorted(
             list(unique_results.values()),
             key=lambda x: x["score"],
@@ -110,10 +95,6 @@ class DocumentRetriever:
         return final_results, expanded_queries
     
     def retrieve(self, query: str) -> Dict[str, Any]:
-        """
-        Retrieve documents based on the configured strategy.
-        Returns both the retrieved documents and additional info about the retrieval process.
-        """
         if self.strategy == "single-step":
             results = self.single_step_retrieval(query)
             return {
@@ -121,7 +102,7 @@ class DocumentRetriever:
                 "strategy": "single-step",
                 "expanded_queries": None
             }
-        else:  # multi-step
+        else: 
             results, expanded_queries = self.multi_step_retrieval(query)
             return {
                 "documents": results,

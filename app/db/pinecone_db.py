@@ -1,41 +1,16 @@
-import pinecone
+from pinecone import Pinecone
 from typing import List, Dict, Any, Optional
 from app.core.config import settings
 
 class PineconeDB:
     def __init__(self):
-        pinecone.init(
+        pc = Pinecone(
             api_key=settings.PINECONE_API_KEY,
             environment=settings.PINECONE_ENVIRONMENT
         )
         
-        if settings.PINECONE_INDEX not in pinecone.list_indexes():
-            pinecone.create_index(
-                name=settings.PINECONE_INDEX,
-                dimension=1536,  
-                metric="cosine"
-            )
-        
-        self.index = pinecone.Index(settings.PINECONE_INDEX)
+        self.index = pc.Index(settings.PINECONE_INDEX)
         self.namespace = settings.PINECONE_NAMESPACE
-    
-    def upsert_documents(self, documents: List[Dict[str, Any]]) -> None:
-        vectors = []
-        
-        for doc in documents:
-            vectors.append({
-                "id": doc["id"],
-                "values": doc["embedding"],
-                "metadata": {
-                    "text": doc["text"],
-                    **doc["metadata"]
-                }
-            })
-        
-        batch_size = 100
-        for i in range(0, len(vectors), batch_size):
-            batch = vectors[i:i + batch_size]
-            self.index.upsert(vectors=batch, namespace=self.namespace)
     
     def similarity_search(
         self, 
@@ -65,6 +40,3 @@ class PineconeDB:
         
         return documents
     
-    def delete_all(self) -> None:
-        """Delete all vectors in the namespace."""
-        self.index.delete(deleteAll=True, namespace=self.namespace)

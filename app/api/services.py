@@ -1,14 +1,65 @@
 from app.rag.embeddings import EmbeddingProcessor
-from app.db.pinecone_db import PineconeDB
+from pinecone import Pinecone, ServerlessSpec
+from app.core.config import settings
+from typing import List, Dict, Any
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class InitPineCone:
+    def __init__(self):
+        pc = Pinecone(
+            api_key=settings.PINECONE_API_KEY,
+            environment=settings.PINECONE_ENVIRONMENT
+        )
+        
+        if settings.PINECONE_INDEX not in pc.list_indexes():
+            pc.create_index(
+                name=settings.PINECONE_INDEX,
+                dimension=1536,  
+                metric="cosine",
+                spec=ServerlessSpec(
+                    cloud='aws',
+                    region='us-east-1'
+                )
+            )
+        
+        self.index = pc.Index(settings.PINECONE_INDEX)
+        self.namespace = settings.PINECONE_NAMESPACE
+
+    def upsert_documents(self, documents: List[Dict[str, Any]]) -> None:
+        vectors = []
+        
+        for doc in documents:
+            vectors.append({
+                "id": doc["id"],
+                "values": doc["embedding"],
+                "metadata": {
+                    "text": doc["text"],
+                    **doc["metadata"]
+                }
+            })
+        
+        batch_size = 100
+        for i in range(0, len(vectors), batch_size):
+            batch = vectors[i:i + batch_size]
+            self.index.upsert(vectors=batch, namespace=self.namespace)
+
+    def delete_all(self) -> None:
+        stats = self.index.describe_index_stats()
+        namespaces = stats.get("namespaces", {})
+        
+        if self.namespace in namespaces:
+            self.index.delete(deleteAll=True, namespace=self.namespace)
+        else:
+            print(f"Namespace '{self.namespace}' doesn't exist yet. Nothing to delete.")
+
+
 class DocumentService:
     def __init__(self):
         self.embedding_processor = EmbeddingProcessor()
-        self.pinecone_db = PineconeDB()
+        self.pinecone_db = InitPineCone()
     
     def load_all_documents(self) -> dict:
         try:
