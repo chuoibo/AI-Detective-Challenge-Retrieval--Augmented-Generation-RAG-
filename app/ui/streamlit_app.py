@@ -97,7 +97,7 @@ with st.sidebar:
         
         **Models Used:**
         - Embeddings: text-embedding-ada-002
-        - LLM: gpt-mini-4o-mini
+        - LLM: gpt-4o-mini
         
         **Vector Database:** Pinecone
         

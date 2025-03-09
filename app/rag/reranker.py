@@ -11,27 +11,15 @@ class DocumentReranker:
         self.top_k = settings.TOP_K_RERANK
     
     def rerank_documents(self, query: str, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Rerank documents using LLM-based relevance scoring.
-        
-        Args:
-            query: The user's original query
-            documents: List of retrieved documents
-            
-        Returns:
-            List of reranked documents with updated confidence scores
-        """
         if not documents:
             return []
         
-        # Prepare for batch processing
-        batch_size = min(5, len(documents))  # Process at most 5 docs at once
+        batch_size = min(5, len(documents))  
         reranked_docs = []
         
         for i in range(0, len(documents), batch_size):
             batch = documents[i:i + batch_size]
             
-            # Create prompt for LLM-based reranking
             prompts = []
             for doc in batch:
                 prompt = f"""
@@ -60,7 +48,6 @@ class DocumentReranker:
                 """
                 prompts.append(prompt)
             
-            # Get relevance scores from LLM for each document
             llm_scores = []
             for prompt in prompts:
                 try:
@@ -78,9 +65,8 @@ class DocumentReranker:
                     digits = ''.join(c for c in score_text if c.isdigit())
                     score = int(digits) if digits else 0
                     
-                    # Cap score to 0-100 range
                     score = max(0, min(100, score))
-                    llm_scores.append(score / 100.0)  # Normalize to 0-1
+                    llm_scores.append(score / 100.0)  
                     
                 except Exception as e:
                     print(f"Error getting LLM score: {e}")
@@ -100,7 +86,6 @@ class DocumentReranker:
                     "confidence": self._get_confidence_label(combined_score)
                 })
         
-        # Sort by combined score and limit to top_k
         reranked_docs = sorted(reranked_docs, key=lambda x: x["score"], reverse=True)[:self.top_k]
         
         return reranked_docs

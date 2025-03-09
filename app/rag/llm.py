@@ -31,10 +31,8 @@ class ReportGenerator:
                     f"- {query}" for query in expanded_queries
                 ])
         
-        # Current timestamp
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Build prompt for the LLM
         prompt = f"""
         You are an AI assistant for detectives investigating a major cryptocurrency exchange hack.
         Based on the detective's query and the provided case evidence, generate a detailed investigation report.
@@ -58,7 +56,6 @@ class ReportGenerator:
         When evidence is contradictory, clearly note the contradictions.
         """
         
-        # Generate report using LLM
         try:
             response = self.client.chat.completions.create(
                 model=self.model,

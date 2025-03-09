@@ -30,9 +30,6 @@ class GuardAgent:
         return True, "Query contains investigation-related keywords"
     
     def _validate_with_llm(self, query: str) -> Tuple[bool, str]:
-        """
-        Use LLM to validate if a query is relevant to the investigation.
-        """
         try:
             prompt = f"""
             You are a security system for a detective AI that only answers questions about a cryptocurrency exchange hack investigation.

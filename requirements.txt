@@ -8,6 +8,4 @@ tiktoken==0.9.0
 pinecone==5.4.2
 boto3==1.35.81
 python-dotenv==1.0.1
-numpy==1.26.4
 pandas==2.2.3
-tqdm==4.67.1
